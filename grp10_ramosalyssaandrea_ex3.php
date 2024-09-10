@@ -1,30 +1,40 @@
 <?php
 // Function to check if the file exists
+//c. file_exists()
 function checkFileExists($filename) {
     return file_exists($filename);
 }
 
 // Function to read the file content
+//a. file_get_contents
 function readFileContent($filename) {
     return file_get_contents($filename);
 }
 
 // Function to append content to the file
+//b. file_put_contents()
 function appendToFile($filename, $content) {
-    return file_put_contents($filename, $content, FILE_APPEND);
+    return file_put_contents($filename, $content . "\n", FILE_APPEND); // Append with newline
 }
 
 // Function to create a new file with initial content
+//b. file_put_contents()
 function createFileWithContent($filename, $content) {
-    return file_put_contents($filename, $content);
+    return file_put_contents($filename, $content . "\n"); // Create file with newline
+}
+
+// Function to read file into an array (each line as an array element)
+//d. file()
+function readFileIntoArray($filename) {
+    return file($filename, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
 }
 
 // Initialize variables
 $filename = '';
 $contentToAppend = '';
 $message = '';
-$fileContent = '';
 $changes = '';
+$fileLines = [];
 
 // Check if form data has been submitted
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
@@ -35,15 +45,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $message = "Filename cannot be empty!";
     } else {
         if (checkFileExists($filename)) {
-            appendToFile($filename, "\n" . $contentToAppend);
+            appendToFile($filename, $contentToAppend);
             $message = "Your TXT file has been updated. Please check your folder.";
             $changes = "New content added to the file:\n" . htmlspecialchars($contentToAppend);
-            $fileContent = readFileContent($filename);
+            $fileLines = readFileIntoArray($filename);
         } else {
             createFileWithContent($filename, $contentToAppend); // Create the file with the provided content
             $message = "TXT file created with initial content!";
             $changes = "Added the following initial content:\n" . htmlspecialchars($contentToAppend);
-            $fileContent = $contentToAppend;
+            $fileLines = readFileIntoArray($filename);
         }
     }
     // Clear the form data after submission
@@ -116,7 +126,19 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             background-color: #333;
             padding: 10px;
             border-radius: 4px;
-            white-space: pre-wrap;
+            white-space: pre-wrap; /* Preserves white space and line breaks */
+        }
+        .file-info ul {
+            background-color: #333;
+            padding: 10px;
+            border-radius: 4px;
+            list-style-type: disc;
+            margin: 0;
+            padding-left: 20px;
+        }
+        .file-info ul li {
+            color: white;
+            margin-bottom: 5px;
         }
     </style>
 </head>
@@ -144,8 +166,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <p><strong>Filename:</strong> <?php echo htmlspecialchars($filename); ?></p>
             <p><strong>Changes:</strong></p>
             <pre><?php echo htmlspecialchars($changes); ?></pre>
-            <p><strong>Current File Content:</strong></p>
-            <pre><?php echo htmlspecialchars($fileContent); ?></pre>
+            <p><strong>File Lines:</strong></p>
+            <ul>
+                <?php foreach ($fileLines as $line): ?>
+                    <li><?php echo htmlspecialchars($line); ?></li>
+                <?php endforeach; ?>
+            </ul>
         </div>
     <?php endif; ?>
 </body>
